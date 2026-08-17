@@ -114,16 +114,51 @@ static const char* 获取干员名称(int operatorCode) {
     return (it != operatorMap.end()) ? it->second : "?";
 }
 
+// 十六进制转换（状态面板用）
+static std::string 十六进制(uint64_t 值) {
+    char 缓冲[32];
+    snprintf(缓冲, sizeof(缓冲), "0x%llX", 值);
+    return std::string(缓冲);
+}
+
 void 主进程(ImDrawList* ImDrawList, ImVec2 size) {
+    // ===== 读取状态诊断（左上角，始终显示，绿=成功 红=失败）=====
+    std::vector<std::string> 状态;
+
+    if (DeltaForceClient) 状态.push_back("[OK] 基址 " + 十六进制(DeltaForceClient));
+    else 状态.push_back("[X] 基址未获取（内核漏洞没跑起来）");
+
     uint64_t World = 读内存列<uint64_t>(DeltaForceClient, {0x15ba4f98, 0x910, 0x70});
-    if (!World) return;
-    uint64_t PlayerController = 读内存列<uint64_t>(World, {0x190, 0x38, 0x0, 0x30});
-    if (!PlayerController) return;
-    uint64_t PlayerCameraManager = 读内存<uint64_t>(PlayerController + 0x408);
-    if (!PlayerCameraManager) return;
+    if (World) 状态.push_back("[OK] World " + 十六进制(World));
+    else 状态.push_back("[X] World 读不到（偏移 0x15ba4f98 失效）");
+
+    uint64_t PlayerController = World ? 读内存列<uint64_t>(World, {0x190, 0x38, 0x0, 0x30}) : 0;
+    if (PlayerController) 状态.push_back("[OK] 控制器 " + 十六进制(PlayerController));
+    else 状态.push_back("[X] 控制器读不到");
+
+    uint64_t PlayerCameraManager = PlayerController ? 读内存<uint64_t>(PlayerController + 0x408) : 0;
+    if (PlayerCameraManager) 状态.push_back("[OK] 相机 " + 十六进制(PlayerCameraManager));
+    else 状态.push_back("[X] 相机读不到");
 
     FMinimalViewInfo POV;
-    if (!读稳定POV(PlayerCameraManager, POV)) return;
+    bool POV有效 = PlayerCameraManager ? 读稳定POV(PlayerCameraManager, POV) : false;
+    if (POV有效) 状态.push_back("[OK] POV 有效 FOV=" + std::to_string((int)POV.FOV));
+    else 状态.push_back("[X] POV 无效");
+
+    {
+        std::lock_guard<std::mutex> lock(玩家锁);
+        状态.push_back("玩家数量 " + std::to_string(玩家数据数组.size()));
+    }
+
+    float 面板Y = 14.0f;
+    for (const std::string &行 : 状态) {
+        bool 成功 = (行.compare(0, 4, "[OK]") == 0);
+        ImU32 颜色 = 成功 ? IM_COL32(127, 255, 127, 255) : IM_COL32(255, 127, 127, 255);
+        AddText(ImDrawList, 行, 15.0f, ImVec2(14.0f, 面板Y), 颜色, true, 1);
+        面板Y += 21.0f;
+    }
+
+    if (!World || !PlayerController || !PlayerCameraManager || !POV有效) return;
 
     FMatrix ViewMatrix = 取Rotation矩阵(POV.Rotation);
 
