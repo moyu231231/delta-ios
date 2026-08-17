@@ -7,7 +7,7 @@ options:
   deploymentTarget:
     iOS: "14.0"
   createIntermediateGroups: true
-  # Xcode 15.4 兼容的项目格式（xcodegen 2.45.4 默认 77 是 Xcode 16 格式，打不开）
+  # objectVersion 60（Xcode 15 兼容）；xcodegen 2.45.4 可能无视，Build.sh 里还有 sed 兜底
   objectVersion: 60
 
 targets:
@@ -26,7 +26,6 @@ targets:
           - convert_to_coreml.py
           - "模型/*.pt"
           - "模型/*.onnx"
-          - "模型/*.mlpackage"
     info:
       path: Info.plist
     settings:

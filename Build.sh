@@ -11,18 +11,21 @@ if ! command -v ldid >/dev/null 2>&1; then
   brew install ldid || true
 fi
 
-echo "=== 2. 转 CoreML 模型（best.pt → best.mlmodel，已转则跳过）==="
-if [ ! -f "模型/best.mlmodel" ]; then
-  # coremltools 9.0 的 BlobWriter 在部分 Python 上有 bug，固定 <9
-  python3 -m pip install --quiet --upgrade "ultralytics" "coremltools<9" 2>/dev/null \
-    || python -m pip install --quiet --upgrade "ultralytics" "coremltools<9"
+echo "=== 2. 转 CoreML 模型（best.pt → best.mlpackage，已转则跳过）==="
+if [ ! -d "模型/best.mlpackage" ]; then
+  # 安装 ultralytics + coremltools（转模型用）
+  python3 -m pip install --quiet --upgrade "ultralytics" "coremltools" 2>/dev/null \
+    || python -m pip install --quiet --upgrade "ultralytics" "coremltools"
   python3 convert_to_coreml.py || python convert_to_coreml.py
 else
-  echo "best.mlmodel 已存在，跳过转换"
+  echo "best.mlpackage 已存在，跳过转换"
 fi
 
 echo "=== 3. 生成 Xcode 工程 ==="
 xcodegen generate
+# 修复 objectVersion：xcodegen 2.45.4 生成 77（Xcode16 格式），Xcode 15.4 打不开，改成 60
+sed -i '' 's/objectVersion = 77/objectVersion = 60/g' AIAimbot.xcodeproj/project.pbxproj
+echo "objectVersion 已修正为 60"
 
 echo "=== 4. 编译 ==="
 xcodebuild -project AIAimbot.xcodeproj \
