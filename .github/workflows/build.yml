@@ -19,8 +19,9 @@ jobs:
       - name: 编译
         run: |
           cd ImGui绘制
-          # 删除和系统 SDK 冲突的 XPC 模块定义（否则 Swift 编译报 redefinition of module 'XPC'）
-          rm -f BaseBin/_external/include/xpc/module.modulemap
+          # 删除 BaseBin 的 _external/include（私有头劫持系统 SDK 的 xpc.h，导致 Swift 编译失败）
+          # 项目代码只用 .include 下的 libjailbreak/xpf/libgrabkernel2，不用 _external/include
+          rm -rf BaseBin/_external/include
           xcodebuild -project ImGui绘制.xcodeproj \
             -target "ImGui绘制" \
             -configuration Release \
