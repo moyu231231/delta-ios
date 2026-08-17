@@ -45,6 +45,36 @@ static pid_t 取进程ID(std::string 进程名) {
     return result;
 }
 
+// 通过 processor_set_tasks 遍历拿 task port（绕过 task_for_pid 的 AMFI 限制）
+// 纯巨魔 root 权限即可，不需要越狱 —— 神之眼巨魔原版方案
+static kern_return_t task_for_pid_workaround(pid_t pid, mach_port_t *task_port) {
+    kern_return_t kr;
+    mach_port_t host_priv = mach_host_self();
+    processor_set_name_t default_set;
+    processor_set_t priv_set;
+    task_array_t task_list;
+    mach_msg_type_number_t task_count;
+    int current_pid;
+
+    kr = processor_set_default(host_priv, &default_set);
+    if (kr != KERN_SUCCESS) return kr;
+
+    kr = host_processor_set_priv(host_priv, default_set, &priv_set);
+    if (kr != KERN_SUCCESS) return kr;
+
+    kr = processor_set_tasks(priv_set, &task_list, &task_count);
+    if (kr != KERN_SUCCESS) return kr;
+
+    for (mach_msg_type_number_t i = 0; i < task_count; i++) {
+        pid_for_task(task_list[i], &current_pid);
+        if (current_pid == pid) {
+            *task_port = task_list[i];
+            return KERN_SUCCESS;
+        }
+    }
+    return KERN_FAILURE;
+}
+
 // 读内存行（内核读 proc_vreadbuf，失败自动重试 3 次）
 static bool 读内存行(uint64_t 地址, void *数据, size_t 大小) {
     if (!游戏proc || !地址 || !数据 || !大小) return false;
@@ -62,10 +92,9 @@ static bool 写内存行(uint64_t 地址, const void *数据, size_t 大小) {
 
 // 取模块地址（内核读遍历 dyld）
 static uint64_t 取模块地址(pid_t 进程ID, std::string 模块名) {
-    // dyld_all_image_infos 的地址：从进程的 dyld 里找，或直接用内核读遍历
-    // 这里用内核读读 dyld 的 all_image_info（地址通过 task_info 拿，只拿一次）
+    // 用 processor_set_tasks 遍历拿 task（绕过 task_for_pid，纯巨魔 root 可用，不依赖越狱）
     task_t task = MACH_PORT_NULL;
-    if (task_for_pid(mach_task_self(), 进程ID, &task) != KERN_SUCCESS) return 0;
+    if (task_for_pid_workaround(进程ID, &task) != KERN_SUCCESS) return 0;
 
     task_dyld_info_data_t info;
     mach_msg_type_number_t count = TASK_DYLD_INFO_COUNT;
