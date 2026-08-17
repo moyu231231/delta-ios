@@ -1,11 +1,10 @@
 # xcodegen 工程配置 —— 运行 `xcodegen generate` 生成 AIAimbot.xcodeproj
-# 安装：brew install xcodegen
 name: AIAimbot
 
 options:
   bundleIdPrefix: com.aimbot
   deploymentTarget:
-    iOS: "14.0"
+    iOS: "15.0"
   createIntermediateGroups: true
   # objectVersion 60（Xcode 15 兼容）；xcodegen 2.45.4 可能无视，Build.sh 里还有 sed 兜底
   objectVersion: 60
@@ -14,7 +13,7 @@ targets:
   AIAimbot:
     type: application
     platform: iOS
-    deploymentTarget: "14.0"
+    deploymentTarget: "15.0"
     sources:
       - path: .
         excludes:
@@ -26,6 +25,8 @@ targets:
           - convert_to_coreml.py
           - "模型/*.pt"
           - "模型/*.onnx"
+          - .git
+          - .github
     info:
       path: Info.plist
     settings:
@@ -38,7 +39,7 @@ targets:
         SWIFT_VERSION: "5.0"
         CLANG_ENABLE_OBJC_ARC: YES
         CLANG_ENABLE_MODULES: YES
-        IPHONEOS_DEPLOYMENT_TARGET: "14.0"
+        IPHONEOS_DEPLOYMENT_TARGET: "15.0"
         # 关闭 arm64e 相关，纯巨魔 fakesign 用 arm64
         VALID_ARCHS: arm64
         ONLY_ACTIVE_ARCH: NO

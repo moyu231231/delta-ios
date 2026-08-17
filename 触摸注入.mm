@@ -54,6 +54,8 @@ static CGPoint     _lastPoint = CGPointZero;
 // ============================================================
 // 动态加载 IOHIDEvent 私有 API
 // ============================================================
+@implementation TouchInjector
+
 + (BOOL)setup {
     static dispatch_once_t onceToken;
     static BOOL ok = NO;
