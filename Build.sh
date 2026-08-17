@@ -33,12 +33,13 @@ xcodebuild -project AIAimbot.xcodeproj \
   -configuration Release \
   -sdk iphoneos \
   -destination 'generic/platform=iOS' \
+  -derivedDataPath build \
   CODE_SIGNING_ALLOWED=NO \
   CODE_SIGN_IDENTITY="" \
   build
 
 echo "=== 5. 打包 ipa ==="
-APP_PATH="build/Release-iphoneos/AIAimbot.app"
+APP_PATH="build/Build/Products/Release-iphoneos/AIAimbot.app"
 if [ ! -d "$APP_PATH" ]; then
   echo "错误：找不到 $APP_PATH"
   exit 1
