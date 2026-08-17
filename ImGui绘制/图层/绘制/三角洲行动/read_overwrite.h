@@ -8,27 +8,22 @@
 #include <sys/sysctl.h>
 
 // ============================================================
-//  一体化内核读取（libjailbreak 内核读写原语）
-//  流程：先跑内核漏洞（ExecutionKernel）→ proc_find 拿游戏 proc
-//        → 之后读/写内存全部走内核原语 proc_vreadbuf / proc_vwritebuf
-//  不依赖 task_for_pid / mach_vm_read（这两个会被 ACE 检测）
+//  跨进程读（过 tersafe/ACE 检测）
+//  tersafe 检测点: task_get_special_port(拿task) / vm_read·vm_write(32位读写)
+//                  / proc_regionfilename(注入) / inline_hook(改码) / debugger(调试)
+//  过检测方案（全部在外挂进程内做，不注入不 hook 不调试）:
+//   1. processor_set_tasks 遍历拿 task port —— 不走 task_for_pid 被检测的正式路径
+//   2. mach_vm_read_overwrite 读 64 位 —— tersafe 只检测 vm_read(32位), 不检测这个
+//   3. 不注入、不 hook、不调试
 // ============================================================
 
-// libjailbreak 导出的内核读写原语（内核漏洞跑起来后可用）
 extern "C" {
-    uint64_t proc_find(pid_t pid);
-    int proc_vreadbuf(uint64_t proc, const void *addr, void *outdata, size_t datalen);
-    int proc_vwritebuf(uint64_t proc, const void *addr, const void *indata, size_t datalen);
+    kern_return_t mach_vm_read_overwrite(vm_map_t target_task, mach_vm_address_t address,
+                                         mach_vm_size_t size, mach_vm_address_t data,
+                                         mach_vm_size_t *outsize);
 }
 
-static uint64_t 游戏proc = 0;   // 游戏进程的 proc 结构（内核读入口）
-
-// 初始化内核读取：proc_find 拿游戏进程 proc（调用前必须先跑完内核漏洞 ExecutionKernel）
-static bool 初始化内核读取(pid_t 游戏pid) {
-    if (游戏pid <= 0) return false;
-    游戏proc = proc_find(游戏pid);
-    return 游戏proc != 0;
-}
+static task_t _task = MACH_PORT_NULL;
 
 static pid_t 取进程ID(std::string 进程名) {
     int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0};
@@ -45,7 +40,7 @@ static pid_t 取进程ID(std::string 进程名) {
     return result;
 }
 
-// 通过 processor_set_tasks 遍历拿 task port（绕过 task_for_pid 的 AMFI 限制）
+// 通过 processor_set_tasks 遍历拿 task port（绕过 task_for_pid 的 AMFI 限制 + tersafe 检测）
 // 纯巨魔 root 权限即可，不需要越狱 —— 神之眼巨魔原版方案
 static kern_return_t task_for_pid_workaround(pid_t pid, mach_port_t *task_port) {
     kern_return_t kr;
@@ -75,30 +70,33 @@ static kern_return_t task_for_pid_workaround(pid_t pid, mach_port_t *task_port) 
     return KERN_FAILURE;
 }
 
-// 读内存行（内核读 proc_vreadbuf，失败自动重试 3 次）
+// 读内存行（mach_vm_read_overwrite 64位，失败自动重试 3 次）
 static bool 读内存行(uint64_t 地址, void *数据, size_t 大小) {
-    if (!游戏proc || !地址 || !数据 || !大小) return false;
+    if (!_task || !地址 || !数据 || !大小) return false;
     for (int 尝试 = 0; 尝试 < 3; 尝试++) {
-        if (proc_vreadbuf(游戏proc, (const void *)地址, 数据, 大小) == 0) return true;
+        mach_vm_size_t out = 0;
+        if (mach_vm_read_overwrite(_task, (mach_vm_address_t)地址, (mach_vm_size_t)大小,
+                                   (mach_vm_address_t)数据, &out) == KERN_SUCCESS && out == 大小) {
+            return true;
+        }
     }
     return false;
 }
 
-// 写内存行（内核写 proc_vwritebuf）
+// 写内存行（vm_write）
 static bool 写内存行(uint64_t 地址, const void *数据, size_t 大小) {
-    if (!游戏proc || !地址 || !数据 || !大小) return false;
-    return proc_vwritebuf(游戏proc, (const void *)地址, 数据, 大小) == 0;
+    if (!_task || !地址 || !数据 || !大小) return false;
+    return vm_write(_task, (vm_address_t)地址,
+                    (vm_offset_t)数据, (mach_msg_type_number_t)大小) == KERN_SUCCESS;
 }
 
-// 取模块地址（内核读遍历 dyld）
+// 取模块地址（processor_set_tasks 拿 task + task_info 拿 dyld 地址 + 读 dyld）
 static uint64_t 取模块地址(pid_t 进程ID, std::string 模块名) {
-    // 用 processor_set_tasks 遍历拿 task（绕过 task_for_pid，纯巨魔 root 可用，不依赖越狱）
-    task_t task = MACH_PORT_NULL;
-    if (task_for_pid_workaround(进程ID, &task) != KERN_SUCCESS) return 0;
+    if (task_for_pid_workaround(进程ID, &_task) != KERN_SUCCESS) return 0;
 
     task_dyld_info_data_t info;
     mach_msg_type_number_t count = TASK_DYLD_INFO_COUNT;
-    if (task_info(task, TASK_DYLD_INFO, (task_info_t)&info, &count) != KERN_SUCCESS) return 0;
+    if (task_info(_task, TASK_DYLD_INFO, (task_info_t)&info, &count) != KERN_SUCCESS) return 0;
 
     dyld_all_image_infos infos{};
     if (!读内存行(info.all_image_info_addr, &infos, sizeof(infos))) return 0;

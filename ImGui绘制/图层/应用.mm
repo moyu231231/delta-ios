@@ -81,7 +81,7 @@ OBJC_EXTERN void 开启或关闭HUD(bool 标识符);
 }
 
 - (void)onDeploy {
-    // 一键部署：检查游戏 → 自动启动游戏 → 启动 HUD（自动跑内核漏洞 + 初始化内核读取 + 绘制 + 自瞄）
+    // 一键部署：检查游戏 → 自动启动游戏 → 启动 HUD（自动读取 + 绘制 + 自瞄）
     bool 游戏在运行 = 检查游戏进程(游戏进程名);
 
     if (!游戏在运行) {
@@ -106,12 +106,12 @@ OBJC_EXTERN void 开启或关闭HUD(bool 标识符);
         sleep(5);
     }
 
-    // 启动 HUD（HUD 自动跑内核漏洞 + 初始化内核读取 + 绘制 + 自瞄）
+    // 启动 HUD（HUD 自动读取游戏 + 绘制 + 自瞄）
     开启或关闭HUD(true);
 
     // 弹成功提示
     UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"部署成功"
-        message:@"✅ 环境已部署\n正在初始化内核...\n去游戏看白色准星圈是否出现" preferredStyle:UIAlertControllerStyleAlert];
+        message:@"✅ 环境已部署\n去游戏看效果" preferredStyle:UIAlertControllerStyleAlert];
     [alert addAction:[UIAlertAction actionWithTitle:@"好的" style:UIAlertActionStyleDefault handler:nil]];
     [self presentViewController:alert animated:YES completion:nil];
 }

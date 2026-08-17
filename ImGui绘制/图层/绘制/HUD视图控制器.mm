@@ -12,11 +12,6 @@
 #import "三角洲行动/自瞄.h"
 #include <unordered_map>
 
-#import "../../Exploit/ExecutionKernel.h"
-
-// 内核初始化状态（状态面板显示，让用户看到内核漏洞/读取卡在哪一步）
-static std::string 内核状态 = "未初始化";
-
 @implementation HUD视图控制器 {
     FBSOrientationObserver* FBSOrientationObserver;
 };
@@ -49,40 +44,12 @@ static std::string 内核状态 = "未初始化";
     ImGui_ImplMetal_Init(self.MTKView.device);
     self.MTLCommandQueue = [self.MTKView.device newCommandQueue];
 
-    内核状态 = "内核漏洞初始化中...";
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
-        NSError *exploitError = nil;
-        [[ExecutionKernel shared] RunWithError:&exploitError];
-        if (exploitError) {
-            内核状态 = "❌ 内核漏洞失败: " + std::string(exploitError.localizedDescription.UTF8String);
-            NSLog(@"[ 三角洲行动 ] 内核初始化失败: %@", exploitError.localizedDescription);
-            return;
-        }
-        内核状态 = "✅ 内核漏洞成功";
-
         pid_t 游戏pid = 取进程ID("DeltaForceClient");
-        if (游戏pid <= 0) {
-            内核状态 = "❌ 游戏进程没找到(DeltaForceClient)";
-            return;
-        }
-        内核状态 = "✅ 游戏进程找到 pid=" + std::to_string(游戏pid);
-
-        if (!初始化内核读取(游戏pid)) {
-            内核状态 = "❌ 内核读取初始化失败(proc_find)";
-            NSLog(@"[ 三角洲行动 ] 内核读取初始化失败（游戏没开？）");
-            return;
-        }
-        内核状态 = "✅ 内核读取成功";
+        if (游戏pid <= 0) return;
 
         DeltaForceClient = 取模块地址(游戏pid, "DeltaForceClient");
-        if (!DeltaForceClient) {
-            内核状态 = "❌ 取模块地址失败(基址拿不到)";
-            return;
-        }
-        char buf[32];
-        snprintf(buf, sizeof(buf), "0x%llX", DeltaForceClient);
-        内核状态 = "✅ 基址成功 " + std::string(buf);
-
+        if (!DeltaForceClient) return;
         NSLog(@"[ 三角洲行动 ] DeltaForceClient: 0x%llX", DeltaForceClient);
 
         pthread_t 子进程ID;
@@ -145,10 +112,8 @@ void 主进程(ImDrawList* ImDrawList, ImVec2 size) {
     // ===== 读取状态诊断（左上角，始终显示，绿=成功 红=失败）=====
     std::vector<std::string> 状态;
 
-    状态.push_back("内核: " + 内核状态);
-
     if (DeltaForceClient) 状态.push_back("[OK] 基址 " + 十六进制(DeltaForceClient));
-    else 状态.push_back("[X] 基址未获取（内核漏洞没跑起来）");
+    else 状态.push_back("[X] 基址未获取（游戏没开？）");
 
     uint64_t World = 读内存列<uint64_t>(DeltaForceClient, {0x15ba4f98, 0x910, 0x70});
     if (World) 状态.push_back("[OK] World " + 十六进制(World));
