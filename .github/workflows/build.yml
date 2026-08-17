@@ -19,9 +19,7 @@ jobs:
       - name: 编译
         run: |
           cd ImGui绘制
-          # 删除 BaseBin 的 _external/include（私有头劫持系统 SDK 的 xpc.h，导致 Swift 编译失败）
           rm -rf BaseBin/_external/include
-          # Build.sh 从 Windows 上传丢失 +x 执行权限，导致 Run Script Permission denied
           chmod +x Build.sh
           xcodebuild -project ImGui绘制.xcodeproj \
             -target "ImGui绘制" \
@@ -30,14 +28,41 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
+            ENABLE_BITCODE=NO \
             SYMROOT="$PWD/build" \
             build
 
-      - name: 打包 ipa
+      - name: 安装 ldid
+        run: |
+          export HOMEBREW_NO_AUTO_UPDATE=1
+          brew install ldid 2>/dev/null || {
+            ARCH=$(uname -m)
+            curl -sL -o ldid "https://github.com/ProcursusTeam/ldid/releases/latest/download/ldid_macosx_${ARCH}"
+            chmod +x ldid
+            echo "$PWD" >> "$GITHUB_PATH"
+          }
+
+      - name: 签名 + 打包
         run: |
           APP="ImGui绘制/build/Release-iphoneos/ImGui绘制.app"
           ls -d "$APP" || { echo "找不到 .app，编译失败"; exit 1; }
-          # 不手动 ldid 签名 —— TrollStore 安装时会自动 fakesign
+          python3 << 'PYEOF'
+          import plistlib
+          with open('ImGui绘制/权限/Entitlements.plist','rb') as f:
+              d = plistlib.load(f)
+          def clean(v):
+              if isinstance(v,str):
+                  return v.replace('$(TeamIdentifierPrefix)','').replace('$(AppIdentifierPrefix)','').replace('$(CFBundleIdentifier)','com.imgui.app')
+              if isinstance(v,list):
+                  return [clean(x) for x in v]
+              if isinstance(v,dict):
+                  return {k:clean(x) for k,x in v.items()}
+              return v
+          with open('entitlements.plist','wb') as f:
+              plistlib.dump(clean(d), f)
+          print('entitlements 处理完成')
+          PYEOF
+          ldid -S entitlements.plist "$APP/ImGui绘制"
           mkdir -p Payload
           cp -r "$APP" Payload/
           zip -qry 三角洲成品.ipa Payload
