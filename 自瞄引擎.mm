@@ -52,15 +52,10 @@
         _detectInterval = 1;
         _minConfidence = 0.4f;
         _running = NO;
-        // 优先用三角洲公益模型（best.mlmodel，头身分离，锁头准）
-        // 没转模型就回退内置 Vision（识别人，精度一般）
-        TargetDetector *df = [TargetDetector detectorWithCoreMLModel:@"best"];
-        if ([df isReady]) {
-            _detector = df;
-            NSLog(@"[AI自瞄] 已加载三角洲模型 best.mlmodel");
-        } else {
-            _detector = [TargetDetector builtInDetector];
-            NSLog(@"[AI自瞄] 未找到 best.mlmodel，回退内置 Vision（先跑 convert_to_coreml.py 转模型）");
+        // 加载三角洲公益模型（best.mlpackage 转的 CoreML，头身分离锁头）
+        _detector = [TargetDetector detectorWithCoreMLModel:@"best"];
+        if (![_detector isReady]) {
+            NSLog(@"[AI自瞄] 警告：best 模型加载失败，自瞄不可用（检查模型是否编译进 App）");
         }
     }
     return self;
@@ -100,8 +95,8 @@
     UIImage *frame = [ScreenCapture capture];
     if (!frame) return;
 
-    // 2. 识别敌人
-    NSArray<Target *> *targets = [self.detector detectPersonsInImage:frame];
+    // 2. 识别敌人（三角洲模型输出 head/body 两类）
+    NSArray<Target *> *targets = [self.detector detectInImage:frame];
     if (targets.count == 0) return;
 
     // Vision 的 boundingBox 基于 CGImage「像素」尺寸，这里用像素尺寸做换算
