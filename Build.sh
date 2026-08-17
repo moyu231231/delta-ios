@@ -7,8 +7,12 @@ echo "=== 1. 安装依赖 ==="
 if ! command -v xcodegen >/dev/null 2>&1; then
   brew install xcodegen
 fi
-if ! command -v ldid >/dev/null 2>&1; then
-  brew install ldid || true
+# 下载最新 ldid（ProcursusTeam v2.1.5-procursus7，支持 Xcode 15 二进制）
+# brew 的 ldid 2.1.5 是 2021 年旧版，处理 Xcode 15 二进制会断言崩，导致 entitlements 写不进 → 闪退
+if [ ! -x ldid ]; then
+  echo "下载最新 ldid（v2.1.5-procursus7）..."
+  curl -sL -o ldid "https://github.com/ProcursusTeam/ldid/releases/download/v2.1.5-procursus7/ldid_macosx_arm64"
+  chmod +x ldid
 fi
 
 echo "=== 2. 转 CoreML 模型（best.pt → best.mlpackage，已转则跳过）==="
@@ -45,12 +49,15 @@ if [ ! -d "$APP_PATH" ]; then
   exit 1
 fi
 
-# 重签名：只用 ldid（把 entitlements 写进二进制，TrollStore fakesign 时保留）
-# 注意：不用 codesign ad-hoc —— ad-hoc 签名写 platform-application 是无效组合，会导致 TrollStore 安装后闪退
-if [ -f entitlements.plist ] && command -v ldid >/dev/null 2>&1; then
+# 重签名：用最新 ldid（对齐神之眼巨魔：先 remove signature，再 ldid -S"path" 无空格）
+if [ -f entitlements.plist ] && [ -x ldid ]; then
   echo "ldid 重签名..."
-  if ldid -S entitlements.plist "$APP_PATH/AIAimbot" 2>&1; then
-    echo "✅ ldid 签名成功"
+  # 先移除已有签名（避免签名冲突）
+  if command -v codesign >/dev/null 2>&1; then
+    codesign --remove-signature "$APP_PATH/AIAimbot" 2>/dev/null || true
+  fi
+  if ./ldid -S"entitlements.plist" "$APP_PATH/AIAimbot" 2>&1; then
+    echo "✅ ldid 签名成功（entitlements 已写进二进制）"
   else
     echo "⚠️ ldid 签名失败，跳过（TrollStore 安装时会自动签 platform-application）"
   fi
