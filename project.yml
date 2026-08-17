@@ -4,7 +4,7 @@ name: AIAimbot
 options:
   bundleIdPrefix: com.aimbot
   deploymentTarget:
-    iOS: "15.0"
+    iOS: "14.0"
   createIntermediateGroups: true
   # objectVersion 60（Xcode 15 兼容）；xcodegen 2.45.4 可能无视，Build.sh 里还有 sed 兜底
   objectVersion: 60
@@ -13,7 +13,7 @@ targets:
   AIAimbot:
     type: application
     platform: iOS
-    deploymentTarget: "15.0"
+    deploymentTarget: "14.0"
     sources:
       - path: .
         excludes:
@@ -39,10 +39,11 @@ targets:
         SWIFT_VERSION: "5.0"
         CLANG_ENABLE_OBJC_ARC: YES
         CLANG_ENABLE_MODULES: YES
-        IPHONEOS_DEPLOYMENT_TARGET: "15.0"
-        # 关闭 arm64e 相关，纯巨魔 fakesign 用 arm64
-        VALID_ARCHS: arm64
-        ONLY_ACTIVE_ARCH: NO
+        # 对齐神之眼巨魔（能跑）的部署目标 14.0，避免 iOS 15 的 chained fixups 导致 TrollStore 闪退
+        IPHONEOS_DEPLOYMENT_TARGET: "14.0"
+        # 禁用 dyld chained fixups（正确 flag 是 -no_fixup_chains，之前臆造的 -no_chained_fixups 是错的）
+        # chained fixups 是 iOS 15 默认，TrollStore fakesign 处理不了 → 系统拒绝启动闪退
+        OTHER_LDFLAGS: "-Wl,-no_fixup_chains"
     dependencies:
       - sdk: Vision.framework
       - sdk: CoreML.framework
