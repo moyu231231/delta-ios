@@ -45,29 +45,14 @@ if [ ! -d "$APP_PATH" ]; then
   exit 1
 fi
 
-# 重签名（把 no-sandbox / platform-application 写进二进制，TrollStore 才能脱离沙盒注入触摸）
-# ldid 对某些新版二进制会断言失败，失败则用 codesign 兜底，再不行 TrollStore 安装时兜底
-if [ -f entitlements.plist ]; then
-  SIGNED=0
-  if command -v ldid >/dev/null 2>&1; then
-    echo "ldid 重签名..."
-    if ldid -S entitlements.plist "$APP_PATH/AIAimbot" 2>&1; then
-      echo "✅ ldid 签名成功"
-      SIGNED=1
-    else
-      echo "⚠️ ldid 签名失败，尝试 codesign..."
-    fi
-  fi
-  if [ "$SIGNED" -eq 0 ] && command -v codesign >/dev/null 2>&1; then
-    if codesign --force --sign - --entitlements entitlements.plist "$APP_PATH/AIAimbot" 2>&1; then
-      echo "✅ codesign 签名成功"
-      SIGNED=1
-    else
-      echo "⚠️ codesign 签名也失败"
-    fi
-  fi
-  if [ "$SIGNED" -eq 0 ]; then
-    echo "⚠️ 签名都失败，跳过（TrollStore 安装时会自动签 platform-application）"
+# 重签名：只用 ldid（把 entitlements 写进二进制，TrollStore fakesign 时保留）
+# 注意：不用 codesign ad-hoc —— ad-hoc 签名写 platform-application 是无效组合，会导致 TrollStore 安装后闪退
+if [ -f entitlements.plist ] && command -v ldid >/dev/null 2>&1; then
+  echo "ldid 重签名..."
+  if ldid -S entitlements.plist "$APP_PATH/AIAimbot" 2>&1; then
+    echo "✅ ldid 签名成功"
+  else
+    echo "⚠️ ldid 签名失败，跳过（TrollStore 安装时会自动签 platform-application）"
   fi
 fi
 

@@ -13,6 +13,12 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
 
+    // 设置主窗口（无 scene manifest 的传统 AppDelegate 模式，必须手动设置 window，否则黑屏）
+    self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
+    self.window.rootViewController = [[UIViewController alloc] init];
+    self.window.backgroundColor = [UIColor clearColor];
+    [self.window makeKeyAndVisible];
+
     // 初始化触摸注入（动态加载 IOHIDEvent 私有 API）
     BOOL touchOK = [TouchInjector setup];
     NSLog(@"[AI自瞄] 触摸注入%@", touchOK ? @"就绪" : @"失败（需 root/巨魔）");
