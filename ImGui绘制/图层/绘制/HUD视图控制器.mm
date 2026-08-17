@@ -54,7 +54,15 @@
             return;
         }
 
-        DeltaForceClient = 取模块地址(取进程ID("DeltaForceClient"), "DeltaForceClient");
+        // 一体化内核读取：内核漏洞跑起来后，proc_find 拿游戏 proc（之后读写全走内核原语）
+        pid_t 游戏pid = 取进程ID("DeltaForceClient");
+        if (!初始化内核读取(游戏pid)) {
+            NSLog(@"[ 三角洲行动 ] 内核读取初始化失败（游戏没开？）");
+            return;
+        }
+        NSLog(@"[ 三角洲行动 ] 内核读取初始化成功，proc=0x%llX", 游戏proc);
+
+        DeltaForceClient = 取模块地址(游戏pid, "DeltaForceClient");
         NSLog(@"[ 三角洲行动 ] DeltaForceClient: 0x%llX", DeltaForceClient);
 
         pthread_t 子进程ID;
@@ -114,11 +122,8 @@ void 主进程(ImDrawList* ImDrawList, ImVec2 size) {
     uint64_t PlayerCameraManager = 读内存<uint64_t>(PlayerController + 0x408);
     if (!PlayerCameraManager) return;
 
-    FMinimalViewInfo POV = {
-        读内存<FVector>(PlayerCameraManager + 0x17A0 + 0x10),
-        读内存<FRotator>(PlayerCameraManager + 0x17A0 + 0x10 + 0x10),
-        读内存<float>(PlayerCameraManager + 0x17A0 + 0x10 + 0x1C),
-    };
+    FMinimalViewInfo POV;
+    if (!读稳定POV(PlayerCameraManager, POV)) return;
 
     FMatrix ViewMatrix = 取Rotation矩阵(POV.Rotation);
 

@@ -6,6 +6,25 @@
 #import <UIKit/UIKit.h>
 
 #import "ImGui绘制-Swift.h"
+#import <sys/sysctl.h>
+#import <string.h>
+#import <stdlib.h>
+
+// 检查游戏进程是否在运行
+static bool 检查游戏进程(const char *进程名) {
+    int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0};
+    size_t len = 0;
+    if (sysctl(mib, 4, nullptr, &len, nullptr, 0) < 0) return false;
+    struct kinfo_proc *procs = (struct kinfo_proc *)malloc(len);
+    if (!procs) return false;
+    if (sysctl(mib, 4, procs, &len, nullptr, 0) < 0) { free(procs); return false; }
+    bool 找到 = false;
+    for (size_t i = 0, n = len / sizeof(struct kinfo_proc); i < n; i++) {
+        if (strcmp(procs[i].kp_proc.p_comm, 进程名) == 0) { 找到 = true; break; }
+    }
+    free(procs);
+    return 找到;
+}
 
 OBJC_EXTERN bool 关闭HUD标识符();
 OBJC_EXTERN void 开启或关闭HUD(bool 标识符);
@@ -53,6 +72,19 @@ OBJC_EXTERN void 开启或关闭HUD(bool 标识符);
     // 自瞄开关写入 UserDefaults（HUD 进程每帧读取）
     [[NSUserDefaults standardUserDefaults] setBool:isOn forKey:@"自瞄开关"];
     [[NSUserDefaults standardUserDefaults] synchronize];
+}
+
+- (void)onDeploy {
+    // 一键部署：检查游戏进程 → 启动 HUD（HUD 自动跑内核漏洞 + 初始化内核读取 + 绘制 + 自瞄）
+    bool 游戏在运行 = 检查游戏进程("DeltaForceClient");
+    if (!游戏在运行) {
+        UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"提示"
+            message:@"请先启动游戏（三角洲）进到对局，再回来点一键部署" preferredStyle:UIAlertControllerStyleAlert];
+        [alert addAction:[UIAlertAction actionWithTitle:@"知道了" style:UIAlertActionStyleDefault handler:nil]];
+        [self presentViewController:alert animated:YES completion:nil];
+        return;
+    }
+    开启或关闭HUD(true);
 }
 
 @end

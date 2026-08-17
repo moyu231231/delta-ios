@@ -4,6 +4,7 @@ import UIKit
 @objc public protocol ModernUIDelegate: AnyObject {
     func onToggleDraw(isOn: Bool)
     func onToggleAimbot(isOn: Bool)
+    func onDeploy()
 }
 
 class UIViewModel: ObservableObject {
@@ -144,6 +145,19 @@ struct MainControlView: View {
                     }
                     .padding(.top, 40)
                     .padding(.bottom, 10)
+
+                    Button(action: {
+                        viewModel.delegate?.onDeploy()
+                    }) {
+                        Text("一键部署环境")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(Color.blue)
+                            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    }
+                    .padding(.horizontal, 16)
 
                     VStack(alignment: .leading, spacing: 8) {
                         Text("功能").font(.system(size: 13, weight: .regular)).foregroundColor(.white.opacity(0.5)).padding(.leading, 32)
