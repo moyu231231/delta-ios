@@ -1,7 +1,14 @@
 #!/bin/sh
 PASSWORD="0000"
 
-set -euo pipefail
+# GitHub Actions 环境没有 /opt/homebrew/bin/ldid，跳过本地签名打包
+# （签名 + ipa 打包已由 workflow 的"签名 + 打包"步骤完成）
+if [ ! -x /opt/homebrew/bin/ldid ]; then
+    echo "Build.sh: 未找到 /opt/homebrew/bin/ldid，跳过（由 workflow 签名打包）"
+    exit 0
+fi
+
+set -eo pipefail
 
 echo "📌 目录: $TARGET_BUILD_DIR"
 
@@ -44,4 +51,3 @@ rm -rf Payload
 cd - > /dev/null
 
 echo "$INFOPLIST_KEY_CFBundleDisplayName.tipa 已生成！"
-
