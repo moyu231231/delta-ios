@@ -122,6 +122,15 @@ void 主进程(ImDrawList* ImDrawList, ImVec2 size) {
 
     FMatrix ViewMatrix = 取Rotation矩阵(POV.Rotation);
 
+    // 每帧从 UserDefaults 读自瞄开关（主 App 软件界面写入的）
+    @autoreleasepool {
+        NSUserDefaults *defs = [NSUserDefaults standardUserDefaults];
+        自瞄.开启 = [defs objectForKey:@"自瞄开关"] ? [defs boolForKey:@"自瞄开关"] : true;
+    }
+
+    // 画 FOV 准星圈（圈到人就自瞄）
+    ImDrawList->AddCircle(ImVec2(size.x * 0.5f, size.y * 0.5f), 自瞄.FOV半径, IM_COL32(255, 255, 255, 150), 64, 1.5f);
+
     uint64_t Pawn = 读内存<uint64_t>(PlayerController + 0x3a0);
     int32_t TeamID = 读内存列<int32_t>(Pawn, {0x390, 0x658});
 

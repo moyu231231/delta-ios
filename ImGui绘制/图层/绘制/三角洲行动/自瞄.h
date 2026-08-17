@@ -15,10 +15,10 @@
 // ============================================================
 
 struct 自瞄配置 {
-    bool 开启 = true;              // 自瞄总开关
+    bool 开启 = true;              // 自瞄总开关（每帧由 HUD 从 UserDefaults 读）
     bool 锁头 = true;              // true=锁头(骨骼31) false=锁胸(骨骼30)
-    float FOV半径 = 250.0f;        // 准星FOV (屏幕像素)
-    float 平滑度 = 0.35f;          // 0~1 越小越慢越像真人
+    float FOV半径 = 200.0f;        // 准星圈半径 (屏幕像素)，圈到人就瞄
+    float 平滑度 = 0.15f;          // 0~1 越小越平滑（越像真人）
     float 最大距离 = 300.0f;       // 米
     bool 人体工学抖动 = false;     // 默认关
     float 抖动幅度 = 0.25f;        // 度
@@ -68,8 +68,21 @@ static bool 读稳定POV(uint64_t PlayerCameraManager, FMinimalViewInfo &POV) {
     bool A合法 = 是合法POV(A);
 
     if (两次一致 && A合法) {
-        POV = A;
-        上一帧POV = A;
+        if (有上一帧POV) {
+            // 一阶低通滤波：滤掉单帧角度尖峰（读取稳定，自瞄不抖）
+            const float 滤波系数 = 0.7f;  // 越小越平滑，但延迟越大
+            FMinimalViewInfo 滤波后 = A;
+            float Yaw差 = A.Rotation.Yaw - 上一帧POV.Rotation.Yaw;
+            while (Yaw差 > 180.0f) Yaw差 -= 360.0f;
+            while (Yaw差 < -180.0f) Yaw差 += 360.0f;
+            滤波后.Rotation.Yaw = 上一帧POV.Rotation.Yaw + Yaw差 * 滤波系数;
+            滤波后.Rotation.Pitch = 上一帧POV.Rotation.Pitch + (A.Rotation.Pitch - 上一帧POV.Rotation.Pitch) * 滤波系数;
+            滤波后.Rotation.Roll = 0.0f;
+            POV = 滤波后;
+        } else {
+            POV = A;
+        }
+        上一帧POV = A;  // 缓存原始值（下一帧滤波用它）
         有上一帧POV = true;
         return true;
     }

@@ -3,15 +3,18 @@ import UIKit
 
 @objc public protocol ModernUIDelegate: AnyObject {
     func onToggleDraw(isOn: Bool)
+    func onToggleAimbot(isOn: Bool)
 }
 
 class UIViewModel: ObservableObject {
     @Published var drawEnabled: Bool
+    @Published var aimbotEnabled: Bool
 
     weak var delegate: ModernUIDelegate?
 
     init(dict: [String: Any], delegate: ModernUIDelegate) {
         self.drawEnabled = dict["drawEnabled"] as? Bool ?? false
+        self.aimbotEnabled = dict["aimbotEnabled"] as? Bool ?? true
         self.delegate = delegate
     }
 }
@@ -143,10 +146,13 @@ struct MainControlView: View {
                     .padding(.bottom, 10)
 
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("绘制").font(.system(size: 13, weight: .regular)).foregroundColor(.white.opacity(0.5)).padding(.leading, 32)
+                        Text("功能").font(.system(size: 13, weight: .regular)).foregroundColor(.white.opacity(0.5)).padding(.leading, 32)
                         SettingsGroup {
                             SettingsToggleRow(icon: "eye.fill", color: .green, title: "绘制总开关", isOn: $viewModel.drawEnabled) {
                                 viewModel.delegate?.onToggleDraw(isOn: $0)
+                            }
+                            SettingsToggleRow(icon: "scope", color: .orange, title: "自瞄开关", isOn: $viewModel.aimbotEnabled) {
+                                viewModel.delegate?.onToggleAimbot(isOn: $0)
                             }
                         }
                     }

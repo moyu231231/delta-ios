@@ -26,8 +26,12 @@ OBJC_EXTERN void 开启或关闭HUD(bool 标识符);
 
     bool HUD是否已开启 = 关闭HUD标识符();
 
+    NSUserDefaults *defs = [NSUserDefaults standardUserDefaults];
+    bool 自瞄开关 = [defs objectForKey:@"自瞄开关"] ? [defs boolForKey:@"自瞄开关"] : YES;
+
     NSDictionary *uiConfig = @{
-        @"drawEnabled": @(HUD是否已开启)
+        @"drawEnabled": @(HUD是否已开启),
+        @"aimbotEnabled": @(自瞄开关),
     };
 
     UIViewController *swiftVC = [ModernUIBridge createControlCenterWithDict:uiConfig delegate:self];
@@ -43,6 +47,12 @@ OBJC_EXTERN void 开启或关闭HUD(bool 标识符);
     bool 标识符 = 关闭HUD标识符();
     if (isOn == 标识符) return;
     开启或关闭HUD(isOn);
+}
+
+- (void)onToggleAimbotWithIsOn:(BOOL)isOn {
+    // 自瞄开关写入 UserDefaults（HUD 进程每帧读取）
+    [[NSUserDefaults standardUserDefaults] setBool:isOn forKey:@"自瞄开关"];
+    [[NSUserDefaults standardUserDefaults] synchronize];
 }
 
 @end

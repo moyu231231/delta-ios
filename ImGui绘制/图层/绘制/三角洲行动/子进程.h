@@ -99,5 +99,7 @@ void* 子进程(void*) {
             std::lock_guard<std::mutex> lock(盒子锁);
             盒子数据数组.swap(局部_盒子数据数组);
         };
+
+        usleep(2000);   // 节流：限制遍历频率，避免疯狂轮询（也降低读取抖动）
     };
 };

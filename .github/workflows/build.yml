@@ -64,5 +64,13 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="build-$(date +%Y%m%d-%H%M%S)"
-          gh release create "$TAG" 三角洲成品.ipa --title "三角洲成品 $TAG" --notes "自动编译产物" --latest
-          echo "✅ 上传成功，去仓库 Releases 页面下载"
+          for i in 1 2 3 4 5; do
+            if gh release create "$TAG" 三角洲成品.ipa --title "三角洲成品 $TAG" --notes "自动编译产物" --latest; then
+              echo "✅ 上传成功，去仓库 Releases 页面下载"
+              exit 0
+            fi
+            echo "⚠️ 上传失败（GitHub 503），第 $i 次重试..."
+            sleep 15
+          done
+          echo "❌ 重试 5 次仍失败"
+          exit 1

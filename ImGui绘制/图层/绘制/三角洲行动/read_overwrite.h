@@ -34,13 +34,17 @@ static pid_t 取进程ID(std::string 进程名) {
     return result;
 }
 
-// 读内存行（mach_vm_read_overwrite，能读 64 位地址）
+// 读内存行（mach_vm_read_overwrite，能读 64 位地址；失败自动重试 3 次）
 static bool 读内存行(uint64_t 地址, void *数据, size_t 大小) {
     if (!_task || !地址 || !数据 || !大小) return false;
-    mach_vm_size_t out = 0;
-    if (mach_vm_read_overwrite(_task, (mach_vm_address_t)地址, (mach_vm_size_t)大小,
-                               (mach_vm_address_t)数据, &out) != KERN_SUCCESS) return false;
-    return out == 大小;
+    for (int 尝试 = 0; 尝试 < 3; 尝试++) {
+        mach_vm_size_t out = 0;
+        if (mach_vm_read_overwrite(_task, (mach_vm_address_t)地址, (mach_vm_size_t)大小,
+                                   (mach_vm_address_t)数据, &out) == KERN_SUCCESS && out == 大小) {
+            return true;
+        }
+    }
+    return false;
 }
 
 // 写内存行（vm_write 是 iOS 标准 API，符号确定存在）
