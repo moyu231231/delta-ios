@@ -1,0 +1,25 @@
+name: Build AI Aimbot IPA
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-14
+    timeout-minutes: 60
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 一键编译打包（转模型 → 生成工程 → 编译 → 出 ipa）
+        run: |
+          chmod +x Build.sh
+          bash Build.sh
+
+      - name: 上传 ipa 产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIAimbot-ipa
+          path: AIAimbot.ipa
+          retention-days: 7

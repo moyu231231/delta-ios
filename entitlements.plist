@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- 巨魔(TrollStore) App 核心权限：脱离沙盒，才能做触摸注入/截屏 -->
+	<key>platform-application</key>
+	<true/>
+	<key>com.apple.private.security.no-sandbox</key>
+	<true/>
+	<!-- 调试/动态注入用（TrollStore 安装时自动补全，这里显式声明） -->
+	<key>get-task-allow</key>
+	<true/>
+</dict>
+</plist>

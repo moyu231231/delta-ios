@@ -1,0 +1,15 @@
+# 编译产物
+build/
+DerivedData/
+*.ipa
+
+# xcodegen 生成的工程（CI 上会重新生成，不推仓库）
+*.xcodeproj
+
+# macOS 垃圾
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+Payload/

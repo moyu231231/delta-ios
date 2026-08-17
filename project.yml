@@ -1,0 +1,48 @@
+# xcodegen 工程配置 —— 运行 `xcodegen generate` 生成 AIAimbot.xcodeproj
+# 安装：brew install xcodegen
+name: AIAimbot
+
+options:
+  bundleIdPrefix: com.aimbot
+  deploymentTarget:
+    iOS: "14.0"
+  createIntermediateGroups: true
+
+targets:
+  AIAimbot:
+    type: application
+    platform: iOS
+    deploymentTarget: "14.0"
+    sources:
+      - path: .
+        excludes:
+          - README.md
+          - project.yml
+          - Info.plist
+          - build
+          - "*.xcodeproj"
+          - convert_to_coreml.py
+          - "模型/*.pt"
+          - "模型/*.onnx"
+    info:
+      path: Info.plist
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.aimbot.delta
+        CODE_SIGNING_ALLOWED: NO
+        CODE_SIGNING_REQUIRED: NO
+        CODE_SIGN_IDENTITY: ""
+        ENABLE_BITCODE: NO
+        SWIFT_VERSION: "5.0"
+        CLANG_ENABLE_OBJC_ARC: YES
+        CLANG_ENABLE_MODULES: YES
+        IPHONEOS_DEPLOYMENT_TARGET: "14.0"
+        # 关闭 arm64e 相关，纯巨魔 fakesign 用 arm64
+        VALID_ARCHS: arm64
+        ONLY_ACTIVE_ARCH: NO
+    dependencies:
+      - sdk: Vision.framework
+      - sdk: CoreML.framework
+      - sdk: UIKit.framework
+      - sdk: Foundation.framework
+      - sdk: CoreGraphics.framework
