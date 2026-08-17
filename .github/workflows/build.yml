@@ -20,7 +20,6 @@ jobs:
         run: |
           cd ImGui绘制
           # 删除 BaseBin 的 _external/include（私有头劫持系统 SDK 的 xpc.h，导致 Swift 编译失败）
-          # 项目代码只用 .include 下的 libjailbreak/xpf/libgrabkernel2，不用 _external/include
           rm -rf BaseBin/_external/include
           # Build.sh 从 Windows 上传丢失 +x 执行权限，导致 Run Script Permission denied
           chmod +x Build.sh
@@ -34,23 +33,11 @@ jobs:
             SYMROOT="$PWD/build" \
             build
 
-      - name: 安装 ldid
-        run: |
-          export HOMEBREW_NO_AUTO_UPDATE=1
-          brew install ldid 2>/dev/null || {
-            ARCH=$(uname -m)
-            curl -sL -o ldid "https://github.com/ProcursusTeam/ldid/releases/latest/download/ldid_macosx_${ARCH}"
-            chmod +x ldid
-            echo "$PWD" >> "$GITHUB_PATH"
-          }
-
-      - name: 签名 + 打包
+      - name: 打包 ipa
         run: |
           APP="ImGui绘制/build/Release-iphoneos/ImGui绘制.app"
           ls -d "$APP" || { echo "找不到 .app，编译失败"; exit 1; }
-          sed 's/\$(TeamIdentifierPrefix)//g; s/\$(AppIdentifierPrefix)//g; s/\$(CFBundleIdentifier)/com.imgui.app/g' \
-            ImGui绘制/权限/Entitlements.plist > entitlements_clean.plist
-          ldid -S entitlements_clean.plist "$APP/ImGui绘制"
+          # 不手动 ldid 签名 —— TrollStore 安装时会自动 fakesign
           mkdir -p Payload
           cp -r "$APP" Payload/
           zip -qry 三角洲成品.ipa Payload
