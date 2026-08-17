@@ -10,6 +10,16 @@
 #import <string.h>
 #import <stdlib.h>
 
+// 游戏进程名 + bundle ID（自动启动游戏用）
+#define 游戏进程名 "DeltaForceClient"
+#define 游戏BundleID @"com.proximabeta.deltaforce"   // ← 三角洲的 bundle ID，如果不对改成你的
+
+// LSApplicationWorkspace 私有 API（自动启动游戏）
+@interface LSApplicationWorkspace : NSObject
++ (instancetype)defaultWorkspace;
+- (BOOL)openApplicationWithBundleID:(NSString *)bundleID;
+@end
+
 // 检查游戏进程是否在运行
 static bool 检查游戏进程(const char *进程名) {
     int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0};
@@ -75,21 +85,27 @@ OBJC_EXTERN void 开启或关闭HUD(bool 标识符);
 }
 
 - (void)onDeploy {
-    // 一键部署：检查游戏进程 → 启动 HUD（HUD 自动跑内核漏洞 + 初始化内核读取 + 绘制 + 自瞄）
-    bool 游戏在运行 = 检查游戏进程("DeltaForceClient");
+    // 一键部署：检查游戏 → 自动启动游戏 → 启动 HUD（自动跑内核漏洞 + 初始化内核读取 + 绘制 + 自瞄）
+    bool 游戏在运行 = 检查游戏进程(游戏进程名);
+
     if (!游戏在运行) {
-        // 游戏没开，弹失败提示
-        UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"部署失败"
-            message:@"❌ 游戏未运行\n请先打开三角洲进到对局，再回来点「一键部署环境」" preferredStyle:UIAlertControllerStyleAlert];
-        [alert addAction:[UIAlertAction actionWithTitle:@"知道了" style:UIAlertActionStyleDefault handler:nil]];
-        [self presentViewController:alert animated:YES completion:nil];
-        return;
+        // 自动启动游戏
+        BOOL 启动成功 = [[LSApplicationWorkspace defaultWorkspace] openApplicationWithBundleID:游戏BundleID];
+        if (!启动成功) {
+            UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"部署失败"
+                message:@"❌ 无法自动启动游戏\n请手动打开三角洲进对局" preferredStyle:UIAlertControllerStyleAlert];
+            [alert addAction:[UIAlertAction actionWithTitle:@"知道了" style:UIAlertActionStyleDefault handler:nil]];
+            [self presentViewController:alert animated:YES completion:nil];
+            return;
+        }
+        // 等游戏启动
+        sleep(5);
     }
 
-    // 启动 HUD
+    // 启动 HUD（HUD 自动跑内核漏洞 + 初始化内核读取 + 绘制 + 自瞄）
     开启或关闭HUD(true);
 
-    // 弹成功提示（HUD 进程会自动跑内核漏洞 + 初始化内核读取，去游戏看白圈）
+    // 弹成功提示
     UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"部署成功"
         message:@"✅ 环境已部署\n正在初始化内核...\n去游戏看白色准星圈是否出现" preferredStyle:UIAlertControllerStyleAlert];
     [alert addAction:[UIAlertAction actionWithTitle:@"好的" style:UIAlertActionStyleDefault handler:nil]];
