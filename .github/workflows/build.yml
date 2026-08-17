@@ -5,7 +5,6 @@ on:
   push:
     branches: [ main ]
 
-# gh release 上传需要写权限
 permissions:
   contents: write
 
@@ -27,7 +26,7 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
-            -derivedDataPath build \
+            SYMROOT="$PWD/build" \
             build
 
       - name: 安装 ldid
@@ -42,7 +41,7 @@ jobs:
 
       - name: 签名 + 打包
         run: |
-          APP="ImGui绘制/build/Build/Products/Release-iphoneos/ImGui绘制.app"
+          APP="ImGui绘制/build/Release-iphoneos/ImGui绘制.app"
           ls -d "$APP" || { echo "找不到 .app，编译失败"; exit 1; }
           sed 's/\$(TeamIdentifierPrefix)//g; s/\$(AppIdentifierPrefix)//g; s/\$(CFBundleIdentifier)/com.imgui.app/g' \
             ImGui绘制/权限/Entitlements.plist > entitlements_clean.plist
