@@ -7,11 +7,13 @@ import UIKit
 
 class UIViewModel: ObservableObject {
     @Published var drawEnabled: Bool
+    @Published var 状态列表: [String]
 
     weak var delegate: ModernUIDelegate?
 
     init(dict: [String: Any], delegate: ModernUIDelegate) {
         self.drawEnabled = dict["drawEnabled"] as? Bool ?? false
+        self.状态列表 = (dict["状态列表"] as? [String]) ?? []
         self.delegate = delegate
     }
 }
@@ -141,6 +143,21 @@ struct MainControlView: View {
                     }
                     .padding(.top, 40)
                     .padding(.bottom, 10)
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("运行状态").font(.system(size: 13, weight: .regular)).foregroundColor(.white.opacity(0.5)).padding(.leading, 32)
+                        SettingsGroup {
+                            VStack(alignment: .leading, spacing: 10) {
+                                ForEach(viewModel.状态列表, id: \.self) { 状态 in
+                                    Text(状态)
+                                        .font(.system(size: 14, weight: .regular))
+                                        .foregroundColor(状态.hasPrefix("✅") ? .green : .white)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                }
+                            }
+                            .padding(.vertical, 14)
+                        }
+                    }
 
                     VStack(alignment: .leading, spacing: 8) {
                         Text("绘制").font(.system(size: 13, weight: .regular)).foregroundColor(.white.opacity(0.5)).padding(.leading, 32)
