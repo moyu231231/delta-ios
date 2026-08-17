@@ -35,8 +35,9 @@
     d.useBuiltIn = NO;
     d.modelName = mlmodelName;
 
-    // 加载 CoreML 模型
+    // 加载 CoreML 模型（支持 .mlmodelc / .mlpackage / .mlmodel 三种格式）
     NSURL *url = [[NSBundle mainBundle] URLForResource:mlmodelName withExtension:@"mlmodelc"];
+    if (!url) url = [[NSBundle mainBundle] URLForResource:mlmodelName withExtension:@"mlpackage"];
     if (!url) url = [[NSBundle mainBundle] URLForResource:mlmodelName withExtension:@"mlmodel"];
     if (url) {
         NSError *err = nil;
