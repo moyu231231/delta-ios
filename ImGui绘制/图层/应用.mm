@@ -9,16 +9,12 @@
 #import <sys/sysctl.h>
 #import <string.h>
 #import <stdlib.h>
+#import <objc/runtime.h>
+#import <objc/message.h>
 
 // 游戏进程名 + bundle ID（自动启动游戏用）
 #define 游戏进程名 "DeltaForceClient"
 #define 游戏BundleID @"com.proximabeta.deltaforce"   // ← 三角洲的 bundle ID，如果不对改成你的
-
-// LSApplicationWorkspace 私有 API（自动启动游戏）
-@interface LSApplicationWorkspace : NSObject
-+ (instancetype)defaultWorkspace;
-- (BOOL)openApplicationWithBundleID:(NSString *)bundleID;
-@end
 
 // 检查游戏进程是否在运行
 static bool 检查游戏进程(const char *进程名) {
@@ -89,8 +85,16 @@ OBJC_EXTERN void 开启或关闭HUD(bool 标识符);
     bool 游戏在运行 = 检查游戏进程(游戏进程名);
 
     if (!游戏在运行) {
-        // 自动启动游戏
-        BOOL 启动成功 = [[LSApplicationWorkspace defaultWorkspace] openApplicationWithBundleID:游戏BundleID];
+        // 自动启动游戏（运行时动态调用 LSApplicationWorkspace，避免链接私有框架）
+        BOOL 启动成功 = NO;
+        Class wsClass = objc_getClass("LSApplicationWorkspace");
+        if (wsClass) {
+            id workspace = [wsClass performSelector:@selector(defaultWorkspace)];
+            if (workspace) {
+                BOOL (*func)(id, SEL, id) = (BOOL (*)(id, SEL, id))[workspace methodForSelector:@selector(openApplicationWithBundleID:)];
+                启动成功 = func(workspace, @selector(openApplicationWithBundleID:), 游戏BundleID);
+            }
+        }
         if (!启动成功) {
             UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"部署失败"
                 message:@"❌ 无法自动启动游戏\n请手动打开三角洲进对局" preferredStyle:UIAlertControllerStyleAlert];
