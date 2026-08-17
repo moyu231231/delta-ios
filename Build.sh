@@ -13,8 +13,9 @@ fi
 
 echo "=== 2. 转 CoreML 模型（best.pt → best.mlmodel，已转则跳过）==="
 if [ ! -f "模型/best.mlmodel" ]; then
-  python3 -m pip install --quiet --upgrade ultralytics coremltools 2>/dev/null \
-    || python -m pip install --quiet --upgrade ultralytics coremltools
+  # coremltools 9.0 的 BlobWriter 在部分 Python 上有 bug，固定 <9
+  python3 -m pip install --quiet --upgrade "ultralytics" "coremltools<9" 2>/dev/null \
+    || python -m pip install --quiet --upgrade "ultralytics" "coremltools<9"
   python3 convert_to_coreml.py || python convert_to_coreml.py
 else
   echo "best.mlmodel 已存在，跳过转换"

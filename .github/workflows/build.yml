@@ -12,6 +12,13 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v4
 
+      # 关键：coremltools 的 C 扩展(BlobWriter)在 Python 3.14 上加载失败，
+      # 必须用 Python 3.11（coremltools 官方稳定支持）
+      - name: 设置 Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
       - name: 一键编译打包（转模型 → 生成工程 → 编译 → 出 ipa）
         run: |
           chmod +x Build.sh
