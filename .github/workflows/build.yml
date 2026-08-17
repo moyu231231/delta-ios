@@ -5,12 +5,17 @@ on:
   push:
     branches: [ main ]
 
+# gh release 上传需要写权限
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: macos-14
     steps:
-      - name: 检出代码
-        uses: actions/checkout@v4
+      - name: 检出代码（原生 git，绕开 checkout action 的 codeload 故障）
+        run: |
+          git clone --depth 1 "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" .
 
       - name: 编译
         run: |
@@ -47,8 +52,10 @@ jobs:
           zip -qry 三角洲成品.ipa Payload
           ls -la 三角洲成品.ipa
 
-      - name: 上传成品
-        uses: actions/upload-artifact@v4
-        with:
-          name: 三角洲成品ipa
-          path: 三角洲成品.ipa
+      - name: 上传到 release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="build-$(date +%Y%m%d-%H%M%S)"
+          gh release create "$TAG" 三角洲成品.ipa --title "三角洲成品 $TAG" --notes "自动编译产物" --latest
+          echo "✅ 上传成功，去仓库 Releases 页面下载"
