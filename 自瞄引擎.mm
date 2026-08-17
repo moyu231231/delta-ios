@@ -52,17 +52,21 @@
         _detectInterval = 1;
         _minConfidence = 0.4f;
         _running = NO;
-        // 加载三角洲公益模型（best.mlpackage 转的 CoreML，头身分离锁头）
-        _detector = [TargetDetector detectorWithCoreMLModel:@"best"];
-        if (![_detector isReady]) {
-            NSLog(@"[AI自瞄] 警告：best 模型加载失败，自瞄不可用（检查模型是否编译进 App）");
-        }
+        // 模型延迟加载：不在 init 里加载，等 start() 时才加载（避免启动闪退）
+        _detector = nil;
     }
     return self;
 }
 
 - (void)start {
     if (self.running) return;
+    // 延迟加载三角洲模型（首次开启自瞄时才加载，避免 App 启动时加载崩溃）
+    if (!_detector) {
+        _detector = [TargetDetector detectorWithCoreMLModel:@"best"];
+        if (![_detector isReady]) {
+            NSLog(@"[AI自瞄] 警告：best 模型加载失败，自瞄不可用");
+        }
+    }
     self.running = YES;
     self.thread = [[NSThread alloc] initWithTarget:self selector:@selector(_mainLoop) object:nil];
     self.thread.name = @"AimbotEngine";
