@@ -2,14 +2,30 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- root 权限 + 脱离沙盒 -->
+	<!-- ===== 对齐神之眼巨魔（能跑）验证过的 entitlements，不是自己瞎写 ===== -->
+	<key>application-identifier</key>
+	<string>$(AppIdentifierPrefix)$(CFBundleIdentifier)</string>
 	<key>platform-application</key>
+	<true/>
+	<!-- 标准沙盒声明（神之眼巨魔有，之前漏了，很可能是闪退根因） -->
+	<key>com.apple.security.app-sandbox</key>
 	<true/>
 	<key>com.apple.private.security.no-sandbox</key>
 	<true/>
 	<key>get-task-allow</key>
 	<true/>
 	<key>task_for_pid-allow</key>
+	<true/>
+	<key>proc_info-allow</key>
+	<true/>
+	<key>file-read-data</key>
+	<true/>
+	<key>com.apple.security.network.client</key>
+	<true/>
+	<!-- 内存保护 -->
+	<key>com.apple.private.kernel.jetsam</key>
+	<true/>
+	<key>com.apple.private.memorystatus</key>
 	<true/>
 	<!-- 触摸注入核心：HID 事件派发/监听/管理 -->
 	<key>com.apple.private.hid.manager.client</key>
@@ -22,11 +38,6 @@
 	<true/>
 	<key>com.apple.private.hid.client.event-filter</key>
 	<true/>
-	<!-- 内存保护 -->
-	<key>com.apple.private.kernel.jetsam</key>
-	<true/>
-	<key>com.apple.private.memorystatus</key>
-	<true/>
 	<!-- IOKit 用户客户端访问（触摸 HID + 屏幕捕获 framebuffer） -->
 	<key>com.apple.security.iokit-user-client-class</key>
 	<array>
@@ -36,6 +47,15 @@
 		<string>IOMobileFramebufferUserClient</string>
 		<string>IOSurfaceRootUserClient</string>
 		<string>AppleMultitouchHIDEventDriverV2</string>
+	</array>
+	<key>com.apple.security.exception.iokit-user-client-class</key>
+	<array>
+		<string>IOSurfaceRootUserClient</string>
+	</array>
+	<!-- 文件绝对路径读写 -->
+	<key>com.apple.security.exception.files.absolute-path.read-write</key>
+	<array>
+		<string>/</string>
 	</array>
 </dict>
 </plist>
