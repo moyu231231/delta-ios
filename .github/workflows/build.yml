@@ -19,6 +19,8 @@ jobs:
       - name: 编译
         run: |
           cd ImGui绘制
+          # 删除和系统 SDK 冲突的 XPC 模块定义（否则 Swift 编译报 redefinition of module 'XPC'）
+          rm -f BaseBin/_external/include/xpc/module.modulemap
           xcodebuild -project ImGui绘制.xcodeproj \
             -target "ImGui绘制" \
             -configuration Release \
