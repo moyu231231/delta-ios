@@ -39,6 +39,8 @@ targets:
         CLANG_ENABLE_OBJC_ARC: YES
         CLANG_ENABLE_MODULES: YES
         IPHONEOS_DEPLOYMENT_TARGET: "15.0"
+        # 对齐能跑的 ImGui绘制（Xcode 工程）：ONLY_ACTIVE_ARCH = YES
+        ONLY_ACTIVE_ARCH: YES
     dependencies:
       - sdk: Vision.framework
       - sdk: CoreML.framework
