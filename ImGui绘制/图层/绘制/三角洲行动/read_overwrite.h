@@ -4,7 +4,7 @@
 #include <vector>
 #include <cstring>
 #include <mach/mach.h>
-#include <mach/mach_vm.h>
+#include <mach/vm_map.h>
 #include <mach-o/dyld_images.h>
 #include <sys/sysctl.h>
 
@@ -25,31 +25,30 @@ static pid_t 取进程ID(std::string 进程名) {
     return result;
 }
 
-// 读内存行 (增强: 判空 + 校验读出字节数)
+// 读内存行 (iOS 用 vm_read_overwrite, 不是 macOS 的 mach_vm_read_overwrite)
 static bool 读内存行(uint64_t 地址, void *数据, size_t 大小) {
     if (!_task || !地址 || !数据 || !大小) return false;
-    mach_vm_size_t out = 0;
-    if (mach_vm_read_overwrite(_task, (mach_vm_address_t)地址, 大小,
-                               (mach_vm_address_t)数据, &out) != KERN_SUCCESS) return false;
+    vm_size_t out = 0;
+    if (vm_read_overwrite(_task, (vm_address_t)地址, (vm_size_t)大小,
+                          (vm_address_t)数据, &out) != KERN_SUCCESS) return false;
     return out == 大小;
 }
 
-// ===== 新增: 写内存 (自瞄写角度用) =====
+// 写内存 (iOS 用 vm_write, 不是 macOS 的 mach_vm_write)
 static bool 写内存行(uint64_t 地址, const void *数据, size_t 大小) {
     if (!_task || !地址 || !数据 || !大小) return false;
-    return mach_vm_write(_task, (mach_vm_address_t)地址,
-                         (vm_offset_t)数据, (mach_msg_type_number_t)大小) == KERN_SUCCESS;
+    return vm_write(_task, (vm_address_t)地址,
+                    (vm_offset_t)数据, (mach_msg_type_number_t)大小) == KERN_SUCCESS;
 }
 
-// ===== 新增: 稳定读 (双重读校验, 防撕裂) =====
-// 连续读两次, 两次字节完全一致才采纳; 否则返回 false (调用方用上一帧有效值)
+// 稳定读 (双重读校验, 防撕裂)
 static bool 稳定读内存行(uint64_t 地址, void *数据, size_t 大小) {
     if (!数据 || !大小 || 大小 > 2048) return false;
     uint8_t 第一次[2048];
     uint8_t 第二次[2048];
     if (!读内存行(地址, 第一次, 大小)) return false;
     if (!读内存行(地址, 第二次, 大小)) return false;
-    if (memcmp(第一次, 第二次, 大小) != 0) return false;  // 两次不一致 = 撕裂
+    if (memcmp(第一次, 第二次, 大小) != 0) return false;
     memcpy(数据, 第一次, 大小);
     return true;
 }
