@@ -78,13 +78,22 @@ OBJC_EXTERN void 开启或关闭HUD(bool 标识符);
     // 一键部署：检查游戏进程 → 启动 HUD（HUD 自动跑内核漏洞 + 初始化内核读取 + 绘制 + 自瞄）
     bool 游戏在运行 = 检查游戏进程("DeltaForceClient");
     if (!游戏在运行) {
-        UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"提示"
-            message:@"请先启动游戏（三角洲）进到对局，再回来点一键部署" preferredStyle:UIAlertControllerStyleAlert];
+        // 游戏没开，弹失败提示
+        UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"部署失败"
+            message:@"❌ 游戏未运行\n请先打开三角洲进到对局，再回来点「一键部署环境」" preferredStyle:UIAlertControllerStyleAlert];
         [alert addAction:[UIAlertAction actionWithTitle:@"知道了" style:UIAlertActionStyleDefault handler:nil]];
         [self presentViewController:alert animated:YES completion:nil];
         return;
     }
+
+    // 启动 HUD
     开启或关闭HUD(true);
+
+    // 弹成功提示（HUD 进程会自动跑内核漏洞 + 初始化内核读取，去游戏看白圈）
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"部署成功"
+        message:@"✅ 环境已部署\n正在初始化内核...\n去游戏看白色准星圈是否出现" preferredStyle:UIAlertControllerStyleAlert];
+    [alert addAction:[UIAlertAction actionWithTitle:@"好的" style:UIAlertActionStyleDefault handler:nil]];
+    [self presentViewController:alert animated:YES completion:nil];
 }
 
 @end
