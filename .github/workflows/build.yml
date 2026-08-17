@@ -22,6 +22,8 @@ jobs:
           # 删除 BaseBin 的 _external/include（私有头劫持系统 SDK 的 xpc.h，导致 Swift 编译失败）
           # 项目代码只用 .include 下的 libjailbreak/xpf/libgrabkernel2，不用 _external/include
           rm -rf BaseBin/_external/include
+          # Build.sh 从 Windows 上传丢失 +x 执行权限，导致 Run Script Permission denied
+          chmod +x Build.sh
           xcodebuild -project ImGui绘制.xcodeproj \
             -target "ImGui绘制" \
             -configuration Release \
