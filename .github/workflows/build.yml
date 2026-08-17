@@ -1,0 +1,54 @@
+name: 编译三角洲iOS成品
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 编译
+        run: |
+          cd ImGui绘制
+          xcodebuild -project ImGui绘制.xcodeproj \
+            -target "ImGui绘制" \
+            -configuration Release \
+            -sdk iphoneos \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            -derivedDataPath build \
+            build
+
+      - name: 安装 ldid
+        run: |
+          export HOMEBREW_NO_AUTO_UPDATE=1
+          brew install ldid 2>/dev/null || {
+            ARCH=$(uname -m)
+            curl -sL -o ldid "https://github.com/ProcursusTeam/ldid/releases/latest/download/ldid_macosx_${ARCH}"
+            chmod +x ldid
+            echo "$PWD" >> "$GITHUB_PATH"
+          }
+
+      - name: 签名 + 打包
+        run: |
+          APP="ImGui绘制/build/Build/Products/Release-iphoneos/ImGui绘制.app"
+          ls -d "$APP" || { echo "找不到 .app，编译失败"; exit 1; }
+          sed 's/\$(TeamIdentifierPrefix)//g; s/\$(AppIdentifierPrefix)//g; s/\$(CFBundleIdentifier)/com.imgui.app/g' \
+            ImGui绘制/权限/Entitlements.plist > entitlements_clean.plist
+          ldid -S entitlements_clean.plist "$APP/ImGui绘制"
+          mkdir -p Payload
+          cp -r "$APP" Payload/
+          zip -qry 三角洲成品.ipa Payload
+          ls -la 三角洲成品.ipa
+
+      - name: 上传成品
+        uses: actions/upload-artifact@v4
+        with:
+          name: 三角洲成品ipa
+          path: 三角洲成品.ipa
