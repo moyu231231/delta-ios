@@ -43,6 +43,8 @@ targets:
         # 关闭 arm64e 相关，纯巨魔 fakesign 用 arm64
         VALID_ARCHS: arm64
         ONLY_ACTIVE_ARCH: NO
+        # 禁用 dyld chained fixups：Xcode 15 默认开，但旧版 ldid 不认识会断言崩
+        OTHER_LDFLAGS: "-Xlinker -no_chained_fixups"
     dependencies:
       - sdk: Vision.framework
       - sdk: CoreML.framework

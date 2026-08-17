@@ -45,10 +45,12 @@ if [ ! -d "$APP_PATH" ]; then
   exit 1
 fi
 
-# 重签名（写进 platform-application / no-sandbox 等权限）
+# 重签名（把 no-sandbox / platform-application 写进二进制，TrollStore 才能脱离沙盒注入触摸）
+# 注意：旧版 ldid 对 Xcode 15 的 chained fixups 会断言崩（已用 -no_chained_fixups 规避），
+#       万一还失败就不中断打包，TrollStore 安装时仍会自动签 platform-application。
 if command -v ldid >/dev/null 2>&1 && [ -f entitlements.plist ]; then
   echo "ldid 重签名..."
-  ldid -S entitlements.plist "$APP_PATH/AIAimbot"
+  ldid -S entitlements.plist "$APP_PATH/AIAimbot" 2>&1 || echo "⚠️ ldid 重签名失败，跳过（TrollStore 安装时会自动签名）"
 fi
 
 mkdir -p Payload
