@@ -32,16 +32,6 @@ jobs:
             SYMROOT="$PWD/build" \
             build
 
-      - name: 安装 ldid
-        run: |
-          export HOMEBREW_NO_AUTO_UPDATE=1
-          brew install ldid 2>/dev/null || {
-            ARCH=$(uname -m)
-            curl -sL -o ldid "https://github.com/ProcursusTeam/ldid/releases/latest/download/ldid_macosx_${ARCH}"
-            chmod +x ldid
-            echo "$PWD" >> "$GITHUB_PATH"
-          }
-
       - name: 签名 + 打包
         run: |
           APP="ImGui绘制/build/Release-iphoneos/ImGui绘制.app"
@@ -62,7 +52,8 @@ jobs:
               plistlib.dump(clean(d), f)
           print('entitlements 处理完成')
           PYEOF
-          ldid -S entitlements.plist "$APP/ImGui绘制"
+          # 用 codesign 签名（macOS 自带，比 ldid 稳定，把 task_for_pid-allow 写进二进制）
+          codesign -f -s - --entitlements entitlements.plist "$APP"
           mkdir -p Payload
           cp -r "$APP" Payload/
           zip -qry 三角洲成品.ipa Payload
