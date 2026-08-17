@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c ' *)",
+      "Bash(xargs cat)",
+      "Bash(find \"/Users/liyuele/Desktop/项目/三角洲手游\" -type f \\\\\\( -name \"*.mm\" -o -name \"*.m\" -o -name \"*.cpp\" -o -name \"*.h\" \\\\\\) | head -40)",
+      "Bash(grep -r \"WatchLoop\\\\|DeltaForceClient\\\\|ExcLoop\\\\|MaintLoop\" \"/Users/liyuele/Desktop/项目/三角洲手游\" --include=\"*.mm\" --include=\"*.m\" --include=\"*.cpp\" --include=\"*.h\" -l 2>/dev/null)",
+      "Skill(anthropic-skills:pdf)",
+      "Skill(anthropic-skills:pdf:*)",
+      "Bash(head -150 \"/Users/liyuele/Downloads/DeltaForceClient-2026-05-21-134758.ips\")",
+      "Bash(python3 -)",
+      "Bash(find /Users/liyuele -name \"DeltaForceClient-2026-05-21*.ips\" 2>/dev/null)",
+      "Bash(sed -n '788,793p' /Users/liyuele/Desktop/项目/三角洲手游/巨魔内容测试/巨魔/ImGui绘制/ImGui绘制.xcodeproj/project.pbxproj)",
+      "Bash(sed -n '852,857p' /Users/liyuele/Desktop/项目/三角洲手游/巨魔内容测试/巨魔/ImGui绘制/ImGui绘制.xcodeproj/project.pbxproj)",
+      "Bash(ls ~/Library/Developer/Xcode/DerivedData/ | grep -i \"ImGui\\\\|imgui\" 2>/dev/null)",
+      "Bash(rm -rf ~/Library/Developer/Xcode/DerivedData/ImGui绘制-* *)",
+      "Bash(install_name_tool -id @rpath/libjailbreak.dylib /Users/liyuele/Desktop/项目/三角洲手游/巨魔内容测试/巨魔/ImGui绘制/libjailbreak.dylib)",
+      "Bash(install_name_tool -id @rpath/libxpf.dylib /Users/liyuele/Desktop/项目/三角洲手游/巨魔内容测试/巨魔/ImGui绘制/libxpf.dylib)",
+      "Bash(install_name_tool -id @rpath/libchoma.dylib /Users/liyuele/Desktop/项目/三角洲手游/巨魔内容测试/巨魔/ImGui绘制/libchoma.dylib)",
+      "Bash(otool -L /Users/liyuele/Desktop/项目/三角洲手游/巨魔内容测试/巨魔/ImGui绘制/libjailbreak.dylib)",
+      "Bash(install_name_tool -change @loader_path/libchoma.dylib @rpath/libchoma.dylib /Users/liyuele/Desktop/项目/三角洲手游/巨魔内容测试/巨魔/ImGui绘制/libjailbreak.dylib)",
+      "Bash(install_name_tool -change @loader_path/libchoma.dylib @rpath/libchoma.dylib /Users/liyuele/Desktop/项目/三角洲手游/巨魔内容测试/巨魔/ImGui绘制/libxpf.dylib)",
+      "Bash(install_name_tool -change @executable_path/libjailbreak.dylib @rpath/libjailbreak.dylib /Users/liyuele/Desktop/项目/三角洲手游/巨魔内容测试/巨魔/ImGui绘制/__TRACKED_VAR__.framework/__TRACKED_VAR__)",
+      "Bash(otool -L /Users/liyuele/Desktop/项目/三角洲手游/巨魔内容测试/巨魔/ImGui绘制/__TRACKED_VAR__.framework/__TRACKED_VAR__)",
+      "Bash(nm -D /Users/liyuele/Desktop/项目/三角洲手游/巨魔内容测试/巨魔/ImGui绘制/libjailbreak.dylib)",
+      "Bash(nm /Users/liyuele/Desktop/项目/三角洲手游/巨魔内容测试/巨魔/ImGui绘制/libjailbreak.dylib)"
+    ]
+  }
+}

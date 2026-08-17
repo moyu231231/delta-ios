@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleIconFile</key>
+	<string>128.jpg</string>
+	<key>CFBundleIconName</key>
+	<string>1024</string>
+	<key>NSAllowsArbitraryLoads</key>
+	<true/>
+	<key>UIAppFonts</key>
+	<array>
+		<string>ProjectDTypeCurve-Bold.ttf</string>
+	</array>
+	<key>UIApplicationShortcutItems</key>
+	<array>
+		<dict>
+			<key>UIApplicationShortcutItemIconSymbolName</key>
+			<string>wand.and.stars</string>
+			<key>UIApplicationShortcutItemTitle</key>
+			<string>Toggle HUD</string>
+			<key>UIApplicationShortcutItemType</key>
+			<string>ch.xxtou.shortcut.toggle-hud</string>
+		</dict>
+	</array>
+	<key>UIApplicationShowsViewsWhileLocked</key>
+	<true/>
+</dict>
+</plist>

@@ -1,0 +1,52 @@
+name: 编译三角洲iOS成品
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - name: 检出代码（原生 git，绕开 checkout action 的 codeload 故障）
+        run: |
+          git clone --depth 1 "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" .
+
+      - name: 编译
+        run: |
+          cd ImGui绘制
+          # 删除 BaseBin 的 _external/include（私有头劫持系统 SDK 的 xpc.h，导致 Swift 编译失败）
+          rm -rf BaseBin/_external/include
+          # Build.sh 从 Windows 上传丢失 +x 执行权限，导致 Run Script Permission denied
+          chmod +x Build.sh
+          xcodebuild -project ImGui绘制.xcodeproj \
+            -target "ImGui绘制" \
+            -configuration Release \
+            -sdk iphoneos \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            SYMROOT="$PWD/build" \
+            build
+
+      - name: 打包 ipa
+        run: |
+          APP="ImGui绘制/build/Release-iphoneos/ImGui绘制.app"
+          ls -d "$APP" || { echo "找不到 .app，编译失败"; exit 1; }
+          # 不手动 ldid 签名 —— TrollStore 安装时会自动 fakesign
+          mkdir -p Payload
+          cp -r "$APP" Payload/
+          zip -qry 三角洲成品.ipa Payload
+          ls -la 三角洲成品.ipa
+
+      - name: 上传到 release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="build-$(date +%Y%m%d-%H%M%S)"
+          gh release create "$TAG" 三角洲成品.ipa --title "三角洲成品 $TAG" --notes "自动编译产物" --latest
+          echo "✅ 上传成功，去仓库 Releases 页面下载"

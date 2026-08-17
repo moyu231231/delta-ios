@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Bucket
+   uuid = "B9DCD206-FAE4-48CC-B0E4-8C6D14FFA8B8"
+   type = "1"
+   version = "2.0">
+   <Breakpoints>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "B2BAF9E3-979E-4D9F-A160-E1482DFBB05B"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "&#x56fe;&#x5c42;/&#x7ed8;&#x5236;/PUBG MOBILE/&#x4e3b;&#x7ebf;&#x7a0b;.h"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "30"
+            endingLineNumber = "30"
+            landmarkName = "&#x53d6;&#x6bcf;&#x5e27;&#x6570;&#x636e;(&#x73a9;&#x5bb6;, &#x5c4f;&#x5e55;&#x5750;&#x6807;)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+   </Breakpoints>
+</Bucket>
